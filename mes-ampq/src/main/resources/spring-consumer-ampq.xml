@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+       http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <rabbit:connection-factory id="connectionFactory"
+                               host="${url}"
+                               port="5672"
+                               username="guest"
+                               password="guest"
+                               channel-cache-size="1024"
+                               publisher-returns="true"
+                               publisher-confirms="true"/>
+
+
+    <!--通过指定下面的admin信息，当前producer中的exchange和queue会在rabbitmq服务器上自动生成 -->
+
+    <rabbit:admin connection-factory="connectionFactory"/>
+
+    <bean id="consumerMessage" class="cec.jiutian.service.impl.AmpqConsumerMessageImpl"></bean>
+
+    <rabbit:queue name="myQueue" durable="true" auto-delete="false" exclusive="false"/>
+
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <rabbit:listener queues="myQueue" ref="consumerMessage"/>
+    </rabbit:listener-container>
+</beans>
