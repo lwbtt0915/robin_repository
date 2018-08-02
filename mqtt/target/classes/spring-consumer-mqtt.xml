@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration/mqtt http://www.springframework.org/schema/integration/mqtt/spring-integration-mqtt.xsd">
+
+    <bean id="clientFactory" class="org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory">
+        <property name="connectionOptions">
+            <bean class="org.eclipse.paho.client.mqttv3.MqttConnectOptions">
+                <property name="userName" value="${mqtt.username}"/>
+                <property name="password" value="${mqtt.password}"/>
+                <property name="serverURIs">
+                    <array>
+                        <value>${mqtt.url}</value>
+                    </array>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="mqttHandler" class="org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler">
+        <constructor-arg name="clientId" value="${mqtt.clientId}"/>
+        <constructor-arg name="clientFactory" ref="clientFactory"/>
+        <property name="async" value="${mqtt.async}"/>
+        <property name="defaultQos" value="${mqtt.defaultQos}"/>
+        <property name="completionTimeout" value="${mqtt.completionTimeout}"/>
+    </bean>
+
+    <int-mqtt:message-driven-channel-adapter id="mqttInbound"
+                                             client-id="${mqtt.clientId}"
+                                             url="${mqtt.url}"
+                                             topics="${mqtt.default.topic}"
+                                             qos="1"
+                                             client-factory="clientFactory"
+                                             channel="startCase"/>
+
+    <int:channel id="startCase"/>
+
+    <int:service-activator id="startCaseService" input-channel="startCase" ref="mqttCaseService" method="startMessage"/>
+
+    <bean id="mqttCaseService" class="cec.jiutian.poc.mqtt.service.MqttConsumerService"/>
+</beans>
