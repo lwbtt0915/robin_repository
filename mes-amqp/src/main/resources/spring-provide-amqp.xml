@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit" xmlns="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+           http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!--配置连接 -->
+	<rabbit:connection-factory id="connectionFactory"
+		host="${rmq.url}" port="${rmq.port}" username="${rmq.username}"
+		password="${rmq.password}" virtual-host="${rmq.vhost}"
+		requested-heartbeat="60" />
+
+	<!--配置队列名 -->
+	<rabbit:queue name="${queue}" durable="true" auto-delete="false"
+		exclusive="false" />
+
+	<!--配置topic类型exchange -->
+	<rabbit:topic-exchange name="${exchange}">
+		<rabbit:bindings>
+			<rabbit:binding queue="${queue}" pattern="alarm-alerts.*" />
+		</rabbit:bindings>
+	</rabbit:topic-exchange>
+
+   <!--配置RabbitTemplate-->
+    <rabbit:template id="amqpTemplate"
+                     connection-factory="connectionFactory"
+                     exchange="${exchange}"
+                     routing-key="${rooutingKey}"/>
+
+	<bean id="messageHandler" class="cec.jiutian.service.impl.AmqpProducerImpl">
+	</bean>
+
+	<!-- 声明消息转换器为SimpleMessageConverter -->
+	<bean id="messageConverter"
+		class="org.springframework.amqp.support.converter.SimpleMessageConverter">
+	</bean>
+
+	<!-- 监听适配器 -->
+	<bean id="amqpListen"
+		class="org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter">
+		<constructor-arg ref="messageHandler" />
+		<property name="defaultListenerMethod" value="handleMessage"></property>
+		<property name="messageConverter" ref="messageConverter"></property>
+	</bean>
+
+	<!--配置监听 -->
+	<rabbit:listener-container
+		connection-factory="connectionFactory">
+		<rabbit:listener ref="amqpListen" queue-names="${queue}" />
+	</rabbit:listener-container>
+
+</beans>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit" xmlns="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+       http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<rabbit:connection-factory id="connectionFactory"
+		host="${rmq.url}" port="${rmq.port}" username="${rmq.username}"
+		password="${rmq.password}" virtual-host="${rmq.vhost}"
+		channel-cache-size="1024" publisher-returns="true" publisher-confirms="true" />
+
+	<!--通过指定下面的admin信息，当前producer中的exchange和queue会在rabbitmq服务器上自动生成 -->
+	<!-- <rabbit:admin connection-factory="connectionFactory"/> -->
+	
+	<bean id="messageHandler" class="cec.jiutian.service.impl.AmqpConsumerMessage">
+	</bean>
+
+	<!-- 声明消息转换器为SimpleMessageConverter -->
+	<bean id="messageConverter"
+		class="org.springframework.amqp.support.converter.SimpleMessageConverter">
+	</bean>
+
+	<bean id="consumerMessage"
+		class="org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter">
+		<constructor-arg ref="messageHandler" />
+		<property name="defaultListenerMethod" value="handleMessage"></property>
+		<property name="messageConverter" ref="messageConverter"></property>
+	</bean>
+
+	<rabbit:queue name="${queue}" durable="true" auto-delete="false"
+		exclusive="false" />
+
+	<rabbit:listener-container
+		connection-factory="connectionFactory">
+		<rabbit:listener queues="${queue}" ref="consumerMessage" />
+	</rabbit:listener-container>
+</beans>
