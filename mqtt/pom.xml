@@ -11,7 +11,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<java-version>1.7</java-version>
+		<java-version>1.8</java-version>
 		<junit.version>4.12</junit.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -78,15 +78,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
-			<artifactId>spring-tx</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jdbc</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -125,7 +117,11 @@
 		    <artifactId>spring-integration-mqtt</artifactId>
 		    <version>${spring.version}</version>
 		</dependency>
-
+		<dependency>
+		    <groupId>org.springframework.integration</groupId>
+		    <artifactId>spring-integration-stream</artifactId>
+		    <version>${spring.version}</version>
+		</dependency>
 
 		<!-- logging -->
 		<dependency>
@@ -151,23 +147,5 @@
 			<scope>test</scope>
 		</dependency>
 		
-		<dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit</artifactId>
-            <version>1.6.1.RELEASE</version>
-        </dependency>
-        
-        <!-- -MQTT 客户端 -->
-        <dependency>
-		  <groupId>org.fusesource.mqtt-client</groupId>
-		  <artifactId>mqtt-client</artifactId>
-		  <version>1.12</version>
-		</dependency>
-		
-		<dependency>
-		    <groupId>org.springframework.integration</groupId>
-		    <artifactId>spring-integration-java-dsl</artifactId>
-		    <version>1.2.0.RELEASE</version>
-		</dependency>
 	</dependencies>
 </project>
