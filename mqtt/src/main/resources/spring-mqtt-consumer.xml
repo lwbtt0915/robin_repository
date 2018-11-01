@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
-	xmlns:context="http://www.springframework.org/schema/context" xmlns:file="http://www.springframework.org/schema/integration/file"
-	xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
-        http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
         http://www.springframework.org/schema/integration/mqtt http://www.springframework.org/schema/integration/mqtt/spring-integration-mqtt.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
+	<context:property-placeholder location="classpath*:application.properties" />
+	
 	<bean id="clientFactory" class="org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory">
 		<property name="connectionOptions">
 			<bean class="org.eclipse.paho.client.mqttv3.MqttConnectOptions">
-				<property name="userName" value="${rmq.vhost}:${mqtt.username}" />
+				<property name="userName" value="${mqtt.username}" />
 				<property name="password" value="${mqtt.password}" />
+				<property name="cleanSession" value="${mqtt.cleanSession}" />
 				<property name="serverURIs">
 					<array>
 						<value>${mqtt.url}</value>
@@ -23,24 +24,18 @@
 		</property>
 	</bean> 
 	
-	<bean id="mqttInbound" class="org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter"/>
+	<int:channel id="mqttInputChannel" /> 
 	
 	<!-- 消息适配器 -->
-    <int-mqtt:message-driven-channel-adapter id="mqttInbound" 
-											client-id="${random.value}"
-											client-factory="clientFactory" 
-											url="${mqtt.url}" 
-											topics="${rooutingKey}"
-											qos="1"
-											auto-startup="true"
-											send-timeout="12"
-											channel="startCase"  />
+    <int-mqtt:message-driven-channel-adapter id="mqttInbound" client-id="consumer#2" 
+	    client-factory="clientFactory" topics="${rooutingKey}" qos="${mqtt.defaultQos}" 
+	    converter="msgConverter" auto-startup="true" send-timeout="12" channel="mqttInputChannel" />
 
-	 <int:channel id="startCase" /> 
+	<bean id="msgConverter" class="org.springframework.integration.mqtt.support.DefaultPahoMessageConverter" />
+
+	<bean id="msgHandler" class="cec.jiutian.poc.mqtt.inbound.SimpleMessageHandler" />
 	
-	<!-- 消息消费处理类 -->
-	<bean id="mqttCaseService" class="cec.jiutian.poc.mqtt.service.MqttService" /> 
-	
-	<int:service-activator id="startCaseService" input-channel="startCase" ref="mqttCaseService" method="startCase" />
-	
+	<int:service-activator id="serviceActivator" input-channel="mqttInputChannel" ref="msgHandler" />
+
+ 
 </beans>

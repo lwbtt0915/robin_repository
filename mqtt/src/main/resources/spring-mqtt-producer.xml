@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
-	xmlns:context="http://www.springframework.org/schema/context" xmlns:file="http://www.springframework.org/schema/integration/file"
-	xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
-        http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
         http://www.springframework.org/schema/integration/mqtt http://www.springframework.org/schema/integration/mqtt/spring-integration-mqtt.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
+	<context:property-placeholder location="classpath*:application.properties" />
+	
 	<bean id="clientFactory" class="org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory">
 		<property name="connectionOptions">
 			<bean class="org.eclipse.paho.client.mqttv3.MqttConnectOptions">
 				<property name="userName" value="${mqtt.username}" />
 				<property name="password" value="${mqtt.password}" />
+				<property name="cleanSession" value="${mqtt.cleanSession}" />
 				<property name="serverURIs">
 					<array>
 						<value>${mqtt.url}</value>
@@ -21,14 +22,24 @@
 				</property>
 			</bean>
 		</property>
-	</bean>
+	</bean> 
+	
+	<int:channel id="mqttOutboundChannel" /> 
 	
 	<bean id="mqttHandler" class="org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler">
-		<constructor-arg name="clientId" value="${mqtt.clientId}" />
+		<constructor-arg name="clientId" value="producer#2" />
 		<constructor-arg name="clientFactory" ref="clientFactory" />
 		<property name="async" value="${mqtt.async}" />
 		<property name="defaultQos" value="${mqtt.defaultQos}" />
+		<property name="defaultTopic" value="${rooutingKey}" />
 		<property name="completionTimeout" value="${mqtt.completionTimeout}" />
 	</bean>
 	
+	<int:service-activator id="serviceActivator" input-channel="mqttOutboundChannel" ref="mqttHandler" method="handleMessage" />
+    
+    <int:gateway id="msgGateway" service-interface="cec.jiutian.poc.mqtt.outbound.MqttMessageProducer"
+      default-request-channel="mqttOutboundChannel">
+      	<int:default-header name="mqtt_topic" value="${rooutingKey}" />
+     </int:gateway> 
+    
 </beans>
